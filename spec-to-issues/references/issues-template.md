@@ -38,6 +38,7 @@ A suggested sequence respecting dependencies. Issues at the same level can be wo
 **Acceptance criteria:**
 - [ ] {Testable end-to-end condition}
 - [ ] {Another testable condition}
+- [ ] {Unit tests pass for business logic (e.g., validation rules, calculations, state transitions)}
 - [ ] {Edge case or validation}
 
 ---

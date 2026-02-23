@@ -42,6 +42,8 @@ A vertical issue like "Implement tenant invitation flow" touches the migration, 
 
 The only exception is genuine **bootstrap/setup work** that has no user-facing behavior: initializing the project, configuring CI, installing core dependencies. These are horizontal by nature and should be the first 1-2 issues at most.
 
+**Unit tests are part of the issue, not a separate task.** If an issue implements business logic, the unit tests for that logic are included in the same issue. This forces testable code from the start — separation of concerns, dependency injection, pure functions for core logic. The acceptance criteria of each issue should reflect this: "unit tests pass for X logic" is a valid criterion. Don't create standalone "write tests" issues — that's horizontal thinking applied to testing.
+
 **Sizing**: Each issue should represent roughly 1 focused implementation session. If you can describe the issue in 1-2 sentences and a developer (or agent) could implement it without needing to ask clarifying questions, the size is right. If the description needs multiple paragraphs, it's too big — split it into smaller vertical slices.
 
 **Ordering**: Issues should be ordered by dependency graph, then by value. Earlier issues deliver the core happy path; later issues handle edge cases, secondary flows, and polish.
