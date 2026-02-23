@@ -77,6 +77,10 @@ get_all_issues_summary() {
     python3 "$SCRIPT_DIR/parse-issues.py" summary "$ISSUES_FILE"
 }
 
+promote_eligible() {
+    python3 "$SCRIPT_DIR/parse-issues.py" promote "$ISSUES_FILE"
+}
+
 # --- Sync Hook (optional) ---------------------------------------------------
 SYNC_SCRIPT="$(dirname "$SCRIPT_DIR")/sync-to-tracker/sync-to-tracker.py"
 
@@ -303,6 +307,8 @@ main() {
                     try_sync
                     echo ""
                     success "${issue_id} → Done ✓"
+                    # Auto-promote Backlog issues whose deps are now met
+                    promote_eligible
                     break
                     ;;
                 r|reject|no|n)

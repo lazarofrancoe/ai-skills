@@ -7,6 +7,7 @@ Commands:
   detail <file> <issue_id>        → Print full issue block
   update-status <file> <id> <st>  → Update an issue's status in-place
   update-notes <file> <id> <note> → Append to an issue's dev notes
+  promote <file>                  → Promote Backlog → Ready when deps are Done
   summary <file>                  → Print one-line-per-issue summary
 """
 
@@ -113,6 +114,25 @@ def update_dev_notes(filepath: str, issue_id: str, notes: str):
         print(f"WARNING: No dev notes field found for {issue_id}", file=sys.stderr)
 
 
+def promote_eligible(filepath: str) -> list[str]:
+    """Promote Backlog issues to Ready if all dependencies are Done.
+    
+    Returns list of promoted issue IDs.
+    """
+    issues = parse_issues(filepath)
+    done_ids = {i['id'] for i in issues if i['status'] == 'Done'}
+    promoted = []
+
+    for issue in issues:
+        if issue['status'] != 'Backlog':
+            continue
+        if not issue['dependencies'] or all(dep in done_ids for dep in issue['dependencies']):
+            update_status(filepath, issue['id'], 'Ready')
+            promoted.append(issue['id'])
+
+    return promoted
+
+
 def print_summary(issues: list[dict]):
     """Print a one-line summary per issue."""
     status_colors = {
@@ -171,6 +191,14 @@ def main():
             print("Usage: parse-issues.py update-notes <file> <issue_id> <notes>", file=sys.stderr)
             sys.exit(1)
         update_dev_notes(filepath, sys.argv[3], sys.argv[4])
+
+    elif command == 'promote':
+        promoted = promote_eligible(filepath)
+        if promoted:
+            for pid in promoted:
+                print(f"  PROMOTED: {pid} → Ready")
+        else:
+            print("  No issues to promote")
 
     elif command == 'summary':
         print_summary(issues)
