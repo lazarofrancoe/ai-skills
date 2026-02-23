@@ -270,9 +270,11 @@ main() {
         local prompt prompt_file
         prompt=$(build_prompt "$issue_id" "$issue_detail")
         prompt_file=$(mktemp /tmp/dev-loop-prompt.XXXXXX)
-        echo "$prompt" > "$prompt_file"
+        printf '%s' "$prompt" > "$prompt_file"
 
-        cat "$prompt_file" | claude -p --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)"
+        claude -p "$(cat "$prompt_file")" \
+            --verbose \
+            --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)"
 
         rm -f "$prompt_file"
 
@@ -325,9 +327,11 @@ main() {
                     local fix_prompt fix_prompt_file
                     fix_prompt=$(build_fix_prompt "$issue_id" "$issue_detail" "$feedback")
                     fix_prompt_file=$(mktemp /tmp/dev-loop-fix-prompt.XXXXXX)
-                    echo "$fix_prompt" > "$fix_prompt_file"
+                    printf '%s' "$fix_prompt" > "$fix_prompt_file"
 
-                    cat "$fix_prompt_file" | claude -p --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)"
+                    claude -p "$(cat "$fix_prompt_file")" \
+                        --verbose \
+                        --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)"
 
                     rm -f "$fix_prompt_file"
 
