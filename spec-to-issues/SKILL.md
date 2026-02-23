@@ -36,17 +36,15 @@ Read the spec thoroughly. Pay special attention to:
 
 Break the spec into issues following these principles:
 
-**Sizing**: Each issue should represent roughly 1 focused implementation session. If you can describe the issue in 1-2 sentences and a developer (or agent) could implement it without needing to ask clarifying questions, the size is right. If the description needs multiple paragraphs or touches 3+ unrelated files, it's too big — split it.
+**Vertical slicing**: Every issue should cut through all layers of the application — database, backend, frontend, whatever the stack requires — to deliver one complete, testable piece of functionality end-to-end. This is non-negotiable.
 
-**Ordering**: Issues should be ordered by dependency graph, then by value. The first issues should set up foundations (data models, base components, API scaffolding) that later issues build on.
+A vertical issue like "Implement tenant invitation flow" touches the migration, the API endpoint, and the UI form — and when it's done, someone can actually test the feature. A horizontal issue like "Create all database models" produces nothing testable on its own and delays feedback.
 
-**Types of issues** to consider:
-- **Setup/infrastructure**: DB migrations, new modules/packages, config
-- **Core logic**: Business logic, API endpoints, services
-- **UI**: Components, pages, layouts
-- **Integration**: Connecting pieces together, external API calls
-- **Polish**: Error handling, loading states, edge cases, validation
-- **Testing**: If the project has a test strategy, include test issues
+The only exception is genuine **bootstrap/setup work** that has no user-facing behavior: initializing the project, configuring CI, installing core dependencies. These are horizontal by nature and should be the first 1-2 issues at most.
+
+**Sizing**: Each issue should represent roughly 1 focused implementation session. If you can describe the issue in 1-2 sentences and a developer (or agent) could implement it without needing to ask clarifying questions, the size is right. If the description needs multiple paragraphs, it's too big — split it into smaller vertical slices.
+
+**Ordering**: Issues should be ordered by dependency graph, then by value. Earlier issues deliver the core happy path; later issues handle edge cases, secondary flows, and polish.
 
 **What makes a good issue**:
 - A clear, action-oriented title (starts with a verb: "Create...", "Implement...", "Add...")
@@ -86,13 +84,13 @@ The user owns the final ordering and dependency graph. Your decomposition is a s
 
 These are heuristics, not rules:
 
-| Too small | Right size | Too big |
-|-----------|-----------|---------|
-| "Add import statement" | "Create User model with migration and basic CRUD endpoints" | "Build the entire authentication system" |
-| "Fix typo in constant" | "Implement email validation with error messages" | "Create all UI screens for the feature" |
-| "Add one CSS class" | "Build the dashboard card component with loading and empty states" | "Set up infrastructure and deploy" |
+| Too small | Right size (vertical) | Too big |
+|-----------|----------------------|---------|
+| "Add import statement" | "Implement user registration: migration, endpoint, form, and validation" | "Build the entire authentication system" |
+| "Create the User model" | "Add email invitation flow: send endpoint, email template, and accept page" | "Create all API endpoints for the feature" |
+| "Add one CSS class" | "Build dashboard card with API data fetch, loading state, and empty state" | "Set up all database models and migrations" |
 
-A good gut check: if an issue takes less than ~5 minutes of focused work, it's too granular. If it would take more than ~2 hours, consider splitting.
+A good gut check: can someone test this issue end-to-end when it's done? If the answer is no, it's probably a horizontal slice — rethink it. The only exception is bootstrap/setup issues at the start.
 
 ## Handling ambiguity
 

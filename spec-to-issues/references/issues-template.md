@@ -26,26 +26,28 @@ A suggested sequence respecting dependencies. Issues at the same level can be wo
 
 ## Issues
 
-### ISSUE-1: {Verb} {concise description}
+### ISSUE-1: {Verb} {concise description of end-to-end functionality}
 
 **Dependencies:** none
 **Complexity:** S | M | L
-**Files likely touched:** `src/models/user.ts`, `prisma/schema.prisma`
+**Layers:** DB | Backend | Frontend _(list all layers this issue touches)_
+**Files likely touched:** `src/models/user.ts`, `src/api/users.ts`, `src/pages/Register.tsx`
 
-{2-4 sentence description of what to build and why. Reference the spec section this comes from if helpful. Include any assumptions made.}
+{2-4 sentence description of what to build and why. Describe the complete vertical slice: what the user does, what happens in the backend, what gets persisted. Reference the spec section this comes from if helpful.}
 
 **Acceptance criteria:**
-- [ ] {Testable condition}
+- [ ] {Testable end-to-end condition}
 - [ ] {Another testable condition}
 - [ ] {Edge case or validation}
 
 ---
 
-### ISSUE-2: {Verb} {concise description}
+### ISSUE-2: {Verb} {concise description of end-to-end functionality}
 
 **Dependencies:** none
 **Complexity:** S | M | L
-**Files likely touched:** `src/components/Dashboard.tsx`
+**Layers:** DB | Backend | Frontend
+**Files likely touched:** `src/components/Dashboard.tsx`, `src/api/dashboard.ts`
 
 {Description}
 
@@ -63,6 +65,7 @@ FORMATTING RULES (for parseability):
 - Issue titles: ### ISSUE-{N}: {title}
 - Dependencies: comma-separated ISSUE-{N} references, or "none"
 - Complexity: exactly one of S, M, L
+- Layers: pipe-separated list of layers touched (e.g., DB | Backend | Frontend)
 - Acceptance criteria: markdown checkboxes (- [ ])
 - Separator: --- between issues
 -->
