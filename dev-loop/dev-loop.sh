@@ -7,6 +7,9 @@ set -euo pipefail
 # Parses a .issues.md file, finds the next Ready issue, invokes Claude Code
 # to implement it, then waits for human approval before continuing.
 #
+# Git strategy: commits only happen on approval. No intermediate commits
+# during implementation or rejection cycles. One commit per approved issue.
+#
 # Usage:
 #   ./dev-loop.sh specs/feature-name.issues.md
 #
@@ -70,12 +73,6 @@ update_issue_status() {
     python3 "$SCRIPT_DIR/parse-issues.py" update-status "$ISSUES_FILE" "$issue_id" "$new_status"
 }
 
-update_issue_dev_notes() {
-    local issue_id="$1"
-    local notes="$2"
-    python3 "$SCRIPT_DIR/parse-issues.py" update-notes "$ISSUES_FILE" "$issue_id" "$notes"
-}
-
 get_all_issues_summary() {
     python3 "$SCRIPT_DIR/parse-issues.py" summary "$ISSUES_FILE"
 }
@@ -109,15 +106,20 @@ ensure_feature_branch() {
     fi
 }
 
-commit_status_change() {
+commit_approved_issue() {
     local issue_id="$1"
-    local status="$2"
-    local title="$3"
-    local status_lower
-    status_lower=$(echo "$status" | tr '[:upper:]' '[:lower:]')
-    git add "$ISSUES_FILE"
-    git commit -m "${issue_id}: ${status_lower} — ${title}" --allow-empty
+    local title="$2"
+    git add -A
+    git commit -m "feat(${issue_id}): ${title}"
 }
+
+discard_changes() {
+    git checkout -- .
+    git clean -fd 2>/dev/null || true
+}
+
+# --- Allowed tools (no git add/commit) --------------------------------------
+ALLOWED_TOOLS="Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)"
 
 # --- Build implementation prompt --------------------------------------------
 build_prompt() {
@@ -149,10 +151,7 @@ ${spec_content}
 1. Read the existing codebase first. Match conventions, patterns, naming, file structure.
 2. Implement the full vertical slice: every layer listed in the issue (DB, Backend, Frontend, etc).
 3. Write unit tests for business logic alongside the code — not as an afterthought.
-4. Make small, logical git commits as you go. Use conventional commits prefixed with the issue id:
-   - feat(${issue_id}): description
-   - test(${issue_id}): description
-   - fix(${issue_id}): description
+4. Do NOT run any git commit or git add commands. The orchestrator handles all git operations.
 5. Do NOT modify the .issues.md file — the orchestrator handles status transitions.
 6. Only implement what the issue describes. If you spot something out of scope, mention it but don't do it.
 7. When done, output a summary of:
@@ -194,7 +193,7 @@ ${spec_content}
 
 1. Focus specifically on addressing the reviewer's feedback.
 2. Make targeted fixes — don't refactor unrelated code.
-3. Commit your changes with: fix(${issue_id}): description of what you fixed
+3. Do NOT run any git commit or git add commands. The orchestrator handles all git operations.
 4. Do NOT modify the .issues.md file.
 5. When done, output a summary of what you changed and how it addresses the feedback.
 PROMPT
@@ -227,7 +226,6 @@ main() {
             echo ""
             echo -e "${BOLD}${GREEN}═══════════════════════════════════════${NC}"
 
-            # Check if everything is done or if things are blocked
             local summary
             summary=$(get_all_issues_summary)
 
@@ -253,9 +251,8 @@ main() {
         echo -e "${BOLD}${CYAN}───────────────────────────────────────${NC}"
         echo ""
 
-        # --- Transition to In Progress --------------------------------------
+        # --- Transition to In Progress (no commit) --------------------------
         update_issue_status "$issue_id" "In Progress"
-        commit_status_change "$issue_id" "start" "$issue_title"
         try_sync
         success "Status → In Progress"
 
@@ -275,16 +272,15 @@ main() {
         claude -p \
             --output-format stream-json \
             --verbose \
-            --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)" \
+            --allowedTools "$ALLOWED_TOOLS" \
             < "$prompt_file" \
             | python3 "$SCRIPT_DIR/stream-filter.py"
 
         rm -f "$prompt_file"
 
-        # --- Transition to In Review ----------------------------------------
+        # --- Transition to In Review (no commit) ----------------------------
         echo ""
         update_issue_status "$issue_id" "In Review"
-        commit_status_change "$issue_id" "review" "$issue_title"
         try_sync
         success "Status → In Review"
 
@@ -301,16 +297,16 @@ main() {
 
             case "$review_choice" in
                 a|approve|yes|y|✅)
-                    # --- Approved -------------------------------------------
+                    # --- Approved: single commit with everything ----------------
                     update_issue_status "$issue_id" "Done"
-                    commit_status_change "$issue_id" "done" "$issue_title"
+                    commit_approved_issue "$issue_id" "$issue_title"
                     try_sync
                     echo ""
                     success "${issue_id} → Done ✓"
                     break
                     ;;
                 r|reject|no|n)
-                    # --- Rejected -------------------------------------------
+                    # --- Rejected: fix without committing -----------------------
                     echo ""
                     echo -e "  ${YELLOW}Enter feedback (end with empty line):${NC}"
                     local feedback=""
@@ -335,7 +331,7 @@ main() {
                     claude -p \
                         --output-format stream-json \
                         --verbose \
-                        --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)" \
+                        --allowedTools "$ALLOWED_TOOLS" \
                         < "$fix_prompt_file" \
                         | python3 "$SCRIPT_DIR/stream-filter.py"
 
@@ -343,23 +339,28 @@ main() {
 
                     echo ""
                     info "Fixes applied. Review again:"
-                    # Loop back to review
                     ;;
                 d|diff)
-                    # --- Show diff ------------------------------------------
+                    # --- Show uncommitted changes -------------------------------
                     echo ""
-                    git diff HEAD~$(git log --oneline "$FEATURE_BRANCH" --not main | wc -l)..HEAD --stat
+                    info "Uncommitted changes:"
+                    echo ""
+                    git diff --stat
+                    # Also show untracked files
+                    git ls-files --others --exclude-standard | while read -r f; do
+                        echo -e " ${GREEN}new file:   ${f}${NC}"
+                    done
                     echo ""
                     read -rp "  Show full diff? (y/n): " show_full
                     if [[ "$show_full" == "y" ]]; then
-                        git diff HEAD~$(git log --oneline "$FEATURE_BRANCH" --not main | wc -l)..HEAD | less
+                        git diff | less
                     fi
                     ;;
                 s|skip)
-                    # --- Skip -----------------------------------------------
-                    warn "Skipping ${issue_id}. Status remains In Review."
+                    # --- Skip: discard all uncommitted changes ------------------
+                    warn "Skipping ${issue_id}. Discarding changes."
                     update_issue_status "$issue_id" "Ready"
-                    commit_status_change "$issue_id" "skipped" "$issue_title"
+                    discard_changes
                     try_sync
                     break
                     ;;
