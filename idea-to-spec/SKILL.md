@@ -25,6 +25,22 @@ If not, ask **at most 3 targeted questions** to fill gaps. Focus on:
 - What's the core problem being solved?
 - Are there constraints? (tech stack, timeline, integrations)
 
+When asking clarifying questions, always present them as a **numbered list of concrete options** the user can pick from, not open-ended questions. This makes it faster for the user to respond and helps you get structured answers.
+
+**Good example:**
+```
+Who is the primary user for this feature?
+1. End users (customers)
+2. Internal team / admins
+3. External partners / integrators
+4. Other (please describe)
+```
+
+**Bad example:**
+```
+Can you tell me more about who will be using this feature?
+```
+
 Don't over-interview. A spec is a living document — it's better to draft something concrete and iterate than to ask 15 clarifying questions. Bias toward action.
 
 ### Step 2: Write the spec

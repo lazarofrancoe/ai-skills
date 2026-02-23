@@ -26,6 +26,8 @@ Find the spec to decompose. The user might:
 
 If the spec doesn't exist or you can't find it, ask the user to point you to it. Don't guess.
 
+Whenever you need to ask the user a question (about ambiguity, scope decisions, etc.), present it as a **numbered list of concrete options** they can pick from, not as an open-ended question.
+
 Read the spec thoroughly. Pay special attention to:
 - **Scope (In/Out)** — this defines the boundaries of what issues you generate
 - **User stories** — each one typically maps to 1-3 issues
