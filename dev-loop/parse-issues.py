@@ -77,22 +77,18 @@ def update_status(filepath: str, issue_id: str, new_status: str):
     """Update an issue's status in the file."""
     content = Path(filepath).read_text()
 
-    # Find the status line after the issue header
-    pattern = rf'(###\s+{re.escape(issue_id)}:.*?\n(?:.*?\n)*?)\*\*Status:\*\*\s*\S+'
+    # Match the status line for the specific issue
+    # Status values can be multi-word (e.g., "In Progress", "In Review")
+    pattern = rf'(###\s+{re.escape(issue_id)}:.*?\n(?:.*?\n)*?\*\*Status:\*\*)\s+(.+)'
     match = re.search(pattern, content)
 
     if not match:
         print(f"ERROR: Could not find status for {issue_id}", file=sys.stderr)
         sys.exit(1)
 
-    # Simple replacement of the status value
-    old_status_pattern = rf'(###\s+{re.escape(issue_id)}:.*?\n(?:.*?\n)*?\*\*Status:\*\*)\s*\S+'
-    content = re.sub(
-        old_status_pattern,
-        rf'\g<1> {new_status}',
-        content,
-        count=1
-    )
+    # Replace only the status value, preserving everything else
+    old_status = match.group(2).strip()
+    content = content[:match.start(2)] + f" {new_status}" + content[match.end(2):]
 
     Path(filepath).write_text(content)
 
