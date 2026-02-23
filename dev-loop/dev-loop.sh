@@ -272,9 +272,10 @@ main() {
         prompt_file=$(mktemp /tmp/dev-loop-prompt.XXXXXX)
         printf '%s' "$prompt" > "$prompt_file"
 
-        claude -p "$(cat "$prompt_file")" \
+        claude -p \
             --verbose \
-            --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)"
+            --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)" \
+            < "$prompt_file"
 
         rm -f "$prompt_file"
 
@@ -329,9 +330,10 @@ main() {
                     fix_prompt_file=$(mktemp /tmp/dev-loop-fix-prompt.XXXXXX)
                     printf '%s' "$fix_prompt" > "$fix_prompt_file"
 
-                    claude -p "$(cat "$fix_prompt_file")" \
+                    claude -p \
                         --verbose \
-                        --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)"
+                        --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)" \
+                        < "$fix_prompt_file"
 
                     rm -f "$fix_prompt_file"
 
