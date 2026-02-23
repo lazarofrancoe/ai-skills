@@ -1,6 +1,6 @@
 # AI Skills
 
-Claude Code skills for product development workflows.
+Claude Code skills and tools for product development workflows.
 
 ## Skills
 
@@ -8,14 +8,25 @@ Claude Code skills for product development workflows.
 |-------|-------------|
 | [`idea-to-spec`](./idea-to-spec/) | Transforms a raw product idea into a structured spec saved to the repo |
 | [`spec-to-issues`](./spec-to-issues/) | Breaks down an approved spec into atomic, implementable issues for a kanban board |
-| [`dev-loop`](./dev-loop/) | Continuous dev loop: picks issues, implements, waits for human review, repeats |
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| [`dev-loop`](./dev-loop/) | Bash script that orchestrates Claude Code CLI to implement issues one by one with human review |
 
 ## Usage
 
-Copy the skill folders you need into your project's `.claude/skills/` directory:
+**Skills** go into your project's `.claude/skills/` directory:
 
 ```bash
-cp -r idea-to-spec spec-to-issues dev-loop /path/to/your-project/.claude/skills/
+cp -r idea-to-spec spec-to-issues /path/to/your-project/.claude/skills/
+```
+
+**dev-loop** runs from anywhere — just point it at an issues file:
+
+```bash
+./dev-loop/dev-loop.sh specs/my-feature.issues.md
 ```
 
 ### Workflow
@@ -25,7 +36,7 @@ cp -r idea-to-spec spec-to-issues dev-loop /path/to/your-project/.claude/skills/
                         ↓
 /spec-to-issues  →  specs/feature.issues.md
                         ↓
-/dev-loop  →  implements issues one by one with human review
+dev-loop.sh  →  implements issues one by one with human review
 ```
 
-Each skill is independent and tracker-agnostic. State lives in the repo as markdown files.
+Each piece is independent and tracker-agnostic. State lives in the repo as markdown files.
