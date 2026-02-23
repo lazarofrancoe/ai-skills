@@ -14,6 +14,7 @@ Claude Code skills and tools for product development workflows.
 | Tool | Description |
 |------|-------------|
 | [`dev-loop`](./dev-loop/) | Bash script that orchestrates Claude Code CLI to implement issues one by one with human review |
+| [`sync-to-tracker`](./sync-to-tracker/) | Syncs `.issues.md` state to Monday.com, Jira, GitHub Projects (adapter-based) |
 
 ## Usage
 
@@ -37,6 +38,9 @@ cp -r idea-to-spec spec-to-issues /path/to/your-project/.claude/skills/
 /spec-to-issues  →  specs/feature.issues.md
                         ↓
 dev-loop.sh  →  implements issues one by one with human review
+                        ↓
+sync-to-tracker  →  mirrors state to Monday / Jira / GitHub Projects
+                    (auto-triggered by dev-loop if .sync-config.json exists)
 ```
 
 Each piece is independent and tracker-agnostic. State lives in the repo as markdown files.

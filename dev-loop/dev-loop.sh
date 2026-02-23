@@ -80,6 +80,15 @@ get_all_issues_summary() {
     python3 "$SCRIPT_DIR/parse-issues.py" summary "$ISSUES_FILE"
 }
 
+# --- Sync Hook (optional) ---------------------------------------------------
+SYNC_SCRIPT="$(dirname "$SCRIPT_DIR")/sync-to-tracker/sync-to-tracker.py"
+
+try_sync() {
+    if [[ -f ".sync-config.json" ]] && [[ -f "$SYNC_SCRIPT" ]]; then
+        python3 "$SYNC_SCRIPT" "$ISSUES_FILE" 2>/dev/null || true
+    fi
+}
+
 # --- Git Helpers ------------------------------------------------------------
 ensure_feature_branch() {
     local feature_name
@@ -245,6 +254,7 @@ main() {
         # --- Transition to In Progress --------------------------------------
         update_issue_status "$issue_id" "In Progress"
         commit_status_change "$issue_id" "start" "$issue_title"
+        try_sync
         success "Status → In Progress"
 
         # --- Get full issue detail ------------------------------------------
@@ -264,6 +274,7 @@ main() {
         echo ""
         update_issue_status "$issue_id" "In Review"
         commit_status_change "$issue_id" "review" "$issue_title"
+        try_sync
         success "Status → In Review"
 
         # --- Human Review Loop ----------------------------------------------
@@ -282,6 +293,7 @@ main() {
                     # --- Approved -------------------------------------------
                     update_issue_status "$issue_id" "Done"
                     commit_status_change "$issue_id" "done" "$issue_title"
+                    try_sync
                     echo ""
                     success "${issue_id} → Done ✓"
                     break
@@ -328,6 +340,7 @@ main() {
                     warn "Skipping ${issue_id}. Status remains In Review."
                     update_issue_status "$issue_id" "Ready"
                     commit_status_change "$issue_id" "skipped" "$issue_title"
+                    try_sync
                     break
                     ;;
                 *)
