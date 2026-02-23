@@ -7,7 +7,7 @@ Claude Code skills for product development workflows.
 | Skill | Description |
 |-------|-------------|
 | [`idea-to-spec`](./idea-to-spec/) | Transforms a raw product idea into a structured spec saved to the repo |
-| `spec-to-issues` | _Coming soon_ — Breaks a spec into actionable issues for a kanban board |
+| [`spec-to-issues`](./spec-to-issues/) | Breaks down an approved spec into atomic, implementable issues for a kanban board |
 
 ## Usage
 
