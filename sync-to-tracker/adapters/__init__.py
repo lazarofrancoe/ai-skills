@@ -13,8 +13,9 @@ class BaseAdapter(ABC):
     3. Add the tracker name to .sync-config.json
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, issues_file: str = ""):
         self.config = config
+        self.issues_file = issues_file
 
     @abstractmethod
     def create_item(

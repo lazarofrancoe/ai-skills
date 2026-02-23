@@ -56,7 +56,7 @@ def save_sync_state(issues_file: str, state: dict):
     state_path.write_text(json.dumps(all_state, indent=2) + "\n")
 
 
-def get_adapter(config: dict):
+def get_adapter(config: dict, issues_file: str = ""):
     """Load the appropriate tracker adapter."""
     tracker = config.get("tracker")
     if not tracker:
@@ -66,7 +66,7 @@ def get_adapter(config: dict):
     adapter_module = f"adapters.{tracker}"
     try:
         mod = import_module(adapter_module)
-        return mod.Adapter(config)
+        return mod.Adapter(config, issues_file=issues_file)
     except ModuleNotFoundError:
         available = [p.stem for p in (SCRIPT_DIR / "adapters").glob("*.py") if p.stem != "__init__" and p.stem != "base"]
         print(f"ERROR: Unknown tracker '{tracker}'", file=sys.stderr)
@@ -108,6 +108,10 @@ CONFIG_TEMPLATE = {
     "monday": {
         "api_token": "YOUR_MONDAY_API_TOKEN",
         "board_id": "YOUR_BOARD_ID",
+        "group_mapping": {
+            "specs/feature.issues.md": "GROUP_ID_FOR_FEATURE",
+            "default": "GROUP_ID_FOR_UNGROUPED"
+        },
         "status_column_id": "status",
         "status_mapping": {
             "backlog": "Backlog",
@@ -133,7 +137,7 @@ NC = '\033[0m'
 def sync(issues_file: str, dry_run: bool = False):
     """Main sync logic."""
     config = load_config()
-    adapter = get_adapter(config)
+    adapter = get_adapter(config, issues_file=issues_file)
     state = load_sync_state(issues_file)
     issues = parse_issues_file(issues_file)
 

@@ -19,7 +19,11 @@ class Adapter(BaseAdapter):
         "monday": {
             "api_token": "your-api-token",
             "board_id": "your-board-id",
-            "group_id": "optional-group-id",
+            "group_mapping": {
+                "specs/migration.issues.md": "migration_group_id",
+                "specs/waitlist.issues.md": "waitlist_group_id",
+                "default": "general_group_id"
+            },
             "status_column_id": "status",
             "complexity_column_id": "complexity",
             "layers_column_id": "layers",
@@ -35,15 +39,16 @@ class Adapter(BaseAdapter):
 
     Get your API token from: monday.com > Profile > Admin > API
     Get board_id from the URL: monday.com/boards/{board_id}
+    Get group IDs from the API playground: monday.com/developers/v2/try-it-yourself
     Get column IDs from: Board settings > Columns
     """
 
-    def __init__(self, config: dict):
-        super().__init__(config)
+    def __init__(self, config: dict, issues_file: str = ""):
+        super().__init__(config, issues_file)
         self.monday_config = config.get("monday", {})
         self.api_token = self.monday_config.get("api_token", "")
         self.board_id = self.monday_config.get("board_id", "")
-        self.group_id = self.monday_config.get("group_id")
+        self.group_mapping = self.monday_config.get("group_mapping", {})
         self.status_column_id = self.monday_config.get("status_column_id", "status")
         self.complexity_column_id = self.monday_config.get("complexity_column_id")
         self.layers_column_id = self.monday_config.get("layers_column_id")
@@ -112,13 +117,16 @@ class Adapter(BaseAdapter):
 
         column_values_json = json.dumps(json.dumps(column_values))
 
+        # Resolve group_id from mapping
+        group_id = self.group_mapping.get(self.issues_file) or self.group_mapping.get("default")
+
         # Build mutation
-        if self.group_id:
+        if group_id:
             query = f"""
                 mutation {{
                     create_item(
                         board_id: {self.board_id},
-                        group_id: "{self.group_id}",
+                        group_id: "{group_id}",
                         item_name: "{self._escape(title)}",
                         column_values: {column_values_json}
                     ) {{

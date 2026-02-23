@@ -21,7 +21,12 @@ The sync is **one-directional**: repo → tracker. The `.issues.md` file is the 
     "tracker": "monday",
     "monday": {
         "api_token": "your-monday-api-token",
-        "board_id": "your-board-id",
+        "board_id": "5026547200",
+        "group_mapping": {
+            "specs/migration.issues.md": "migration_group_id",
+            "specs/waitlist.issues.md": "waitlist_group_id",
+            "default": "general_group_id"
+        },
         "status_column_id": "status",
         "status_mapping": {
             "backlog": "Backlog",
@@ -37,7 +42,10 @@ The sync is **one-directional**: repo → tracker. The `.issues.md` file is the 
 **Where to find these values:**
 - `api_token`: monday.com → Profile picture → Admin → API
 - `board_id`: From the board URL: `monday.com/boards/{board_id}`
+- `group IDs`: monday.com/developers/v2/try-it-yourself → query `boards(ids: [...]) { groups { id title } }`
 - `status_column_id`: Board settings → Columns → click the status column → see ID
+
+Each `.issues.md` file maps to a Monday group. The `default` key is used as fallback for unmapped files.
 
 ### 2. Run initial sync
 

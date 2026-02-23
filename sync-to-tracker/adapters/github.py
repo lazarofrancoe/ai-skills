@@ -27,8 +27,8 @@ from . import BaseAdapter
 
 class Adapter(BaseAdapter):
 
-    def __init__(self, config: dict):
-        super().__init__(config)
+    def __init__(self, config: dict, issues_file: str = ""):
+        super().__init__(config, issues_file)
         raise NotImplementedError(
             "GitHub Projects adapter is not yet implemented. "
             "Contributions welcome — see adapters/__init__.py for the interface."
