@@ -113,8 +113,10 @@ commit_status_change() {
     local issue_id="$1"
     local status="$2"
     local title="$3"
+    local status_lower
+    status_lower=$(echo "$status" | tr '[:upper:]' '[:lower:]')
     git add "$ISSUES_FILE"
-    git commit -m "${issue_id}: ${status,,} — ${title}" --allow-empty
+    git commit -m "${issue_id}: ${status_lower} — ${title}" --allow-empty
 }
 
 # --- Build implementation prompt --------------------------------------------
