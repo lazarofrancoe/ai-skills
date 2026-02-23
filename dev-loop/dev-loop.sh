@@ -309,7 +309,9 @@ main() {
                     success "${issue_id} → Done ✓"
                     # Auto-promote Backlog issues whose deps are now met
                     promote_eligible
-                    break
+                    echo ""
+                    info "Loop paused. Run again to pick up the next issue."
+                    exit 0
                     ;;
                 r|reject|no|n)
                     # --- Rejected: fix without committing -----------------------
