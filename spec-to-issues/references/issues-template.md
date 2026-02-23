@@ -28,6 +28,7 @@ A suggested sequence respecting dependencies. Issues at the same level can be wo
 
 ### ISSUE-1: {Verb} {concise description of end-to-end functionality}
 
+**Status:** Backlog
 **Dependencies:** none
 **Complexity:** S | M | L
 **Layers:** DB | Backend | Frontend _(list all layers this issue touches)_
@@ -41,10 +42,13 @@ A suggested sequence respecting dependencies. Issues at the same level can be wo
 - [ ] {Unit tests pass for business logic (e.g., validation rules, calculations, state transitions)}
 - [ ] {Edge case or validation}
 
+**Dev notes:** _(filled by dev-loop during implementation)_
+
 ---
 
 ### ISSUE-2: {Verb} {concise description of end-to-end functionality}
 
+**Status:** Backlog
 **Dependencies:** none
 **Complexity:** S | M | L
 **Layers:** DB | Backend | Frontend
@@ -64,9 +68,11 @@ A suggested sequence respecting dependencies. Issues at the same level can be wo
 <!--
 FORMATTING RULES (for parseability):
 - Issue titles: ### ISSUE-{N}: {title}
+- Status: exactly one of Backlog, Ready, In Progress, In Review, Done
 - Dependencies: comma-separated ISSUE-{N} references, or "none"
 - Complexity: exactly one of S, M, L
 - Layers: pipe-separated list of layers touched (e.g., DB | Backend | Frontend)
-- Acceptance criteria: markdown checkboxes (- [ ])
+- Acceptance criteria: markdown checkboxes (- [ ] or - [x])
+- Dev notes: free text filled during implementation, empty until then
 - Separator: --- between issues
 -->

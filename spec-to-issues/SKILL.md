@@ -51,9 +51,11 @@ The only exception is genuine **bootstrap/setup work** that has no user-facing b
 **What makes a good issue**:
 - A clear, action-oriented title (starts with a verb: "Create...", "Implement...", "Add...")
 - A concise description of what to build
+- Status set to `Backlog` (the user will move issues to `Ready` when they want them picked up by the dev loop)
 - Acceptance criteria (2-4 checkboxes, inherited from the spec or derived)
 - Dependencies explicitly listed (which issues must be done first)
 - Files/areas likely to be touched (helps the agent or developer orient)
+- A `Dev notes` field left empty (filled during implementation)
 
 ### Step 3: Write the issues file
 
