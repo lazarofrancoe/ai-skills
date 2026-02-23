@@ -273,9 +273,11 @@ main() {
         printf '%s' "$prompt" > "$prompt_file"
 
         claude -p \
+            --output-format stream-json \
             --verbose \
             --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)" \
-            < "$prompt_file"
+            < "$prompt_file" \
+            | python3 "$SCRIPT_DIR/stream-filter.py"
 
         rm -f "$prompt_file"
 
@@ -331,9 +333,11 @@ main() {
                     printf '%s' "$fix_prompt" > "$fix_prompt_file"
 
                     claude -p \
+                        --output-format stream-json \
                         --verbose \
                         --allowedTools "Bash(git commit:*),Bash(git add:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Read,Write,Edit,Bash(mkdir:*),Bash(ls:*),Bash(cat:*),Bash(find:*),Bash(grep:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(pnpm:*),Bash(yarn:*),Bash(pip:*),Bash(python:*),Bash(pytest:*),Bash(cargo:*)" \
-                        < "$fix_prompt_file"
+                        < "$fix_prompt_file" \
+                        | python3 "$SCRIPT_DIR/stream-filter.py"
 
                     rm -f "$fix_prompt_file"
 
