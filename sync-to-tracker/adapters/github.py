@@ -39,3 +39,6 @@ class Adapter(BaseAdapter):
 
     def update_status(self, tracker_id: str, status: str):
         ...
+
+    def update_description(self, tracker_id: str, description: str):
+        ...

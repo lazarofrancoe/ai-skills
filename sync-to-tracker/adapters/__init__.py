@@ -51,3 +51,14 @@ class BaseAdapter(ABC):
             status: Normalized status (backlog, ready, in_progress, in_review, done)
         """
         ...
+
+    @abstractmethod
+    def update_description(self, tracker_id: str, description: str):
+        """
+        Replace the description/update of an existing item.
+
+        Args:
+            tracker_id: The tracker's item ID
+            description: Human-readable description text
+        """
+        ...

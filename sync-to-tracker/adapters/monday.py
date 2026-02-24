@@ -189,6 +189,22 @@ class Adapter(BaseAdapter):
         """
         self._graphql(query)
 
+    def update_description(self, tracker_id: str, description: str):
+        if not description:
+            return
+        clean_desc = description[:5000].replace('"', '\\"').replace('\n', '\\n')
+        query = f"""
+            mutation {{
+                create_update(
+                    item_id: {tracker_id},
+                    body: "{clean_desc}"
+                ) {{
+                    id
+                }}
+            }}
+        """
+        self._graphql(query)
+
     @staticmethod
     def _escape(s: str) -> str:
         """Escape a string for use in GraphQL."""

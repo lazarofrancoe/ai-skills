@@ -275,12 +275,52 @@ def show_status(issues_file: str):
         print(f"  {issue_id}: {issue['title']}  [{synced}]")
 
 
+def resync_descriptions(issues_file: str, dry_run: bool = False):
+    """Re-push descriptions for all synced issues."""
+    config = load_config()
+    adapter = get_adapter(config, issues_file=issues_file)
+    state = load_sync_state(issues_file)
+    issues = parse_issues_file(issues_file)
+
+    if not state:
+        print("  No sync state found. Run sync first to create issues.")
+        return
+
+    updated = 0
+    skipped = 0
+
+    for issue in issues:
+        issue_id = issue["id"]
+        tracker_item = state.get(issue_id)
+
+        if not tracker_item:
+            skipped += 1
+            continue
+
+        summary = extract_human_summary(issue.get("raw_block", ""))
+        if not summary:
+            skipped += 1
+            continue
+
+        if dry_run:
+            print(f"  {YELLOW}[RESYNC]{NC}  {issue_id}: {issue['title']}")
+        else:
+            adapter.update_description(tracker_item["tracker_id"], summary)
+            print(f"  {YELLOW}✓ Updated{NC}  {issue_id}: {issue['title']}")
+        updated += 1
+
+    print()
+    label = "[DRY RUN] " if dry_run else ""
+    print(f"  {label}{YELLOW}{updated} updated{NC}  {skipped} skipped")
+
+
 # --- CLI --------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Sync .issues.md to project tracker")
     parser.add_argument("issues_file", help="Path to .issues.md file")
     parser.add_argument("--init", action="store_true", help="Initialize: create all issues in tracker")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without syncing")
+    parser.add_argument("--resync", action="store_true", help="Re-push descriptions for all existing issues")
     parser.add_argument("--status", action="store_true", help="Show current sync state")
 
     args = parser.parse_args()
@@ -295,6 +335,8 @@ def main():
 
     if args.status:
         show_status(args.issues_file)
+    elif args.resync:
+        resync_descriptions(args.issues_file, dry_run=args.dry_run)
     else:
         sync(args.issues_file, dry_run=args.dry_run)
 
