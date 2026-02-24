@@ -209,9 +209,16 @@ class Adapter(BaseAdapter):
     @staticmethod
     def _to_html(text: str) -> str:
         """Convert plain text summary to Monday-compatible HTML."""
+        import re as _re
         lines = text.split('\n')
         html_parts = []
         in_list = False
+
+        def _inline(s):
+            """Convert markdown inline formatting to HTML."""
+            s = _re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+            s = _re.sub(r'`(.+?)`', r'<code>\1</code>', s)
+            return s
 
         for line in lines:
             stripped = line.strip()
@@ -232,14 +239,14 @@ class Adapter(BaseAdapter):
                 if not in_list:
                     html_parts.append('<ul>')
                     in_list = True
-                html_parts.append(f'<li>{stripped}</li>')
+                html_parts.append(f'<li>{_inline(stripped)}</li>')
                 continue
 
             # Regular text
             if in_list:
                 html_parts.append('</ul>')
                 in_list = False
-            html_parts.append(f'<p>{stripped}</p>')
+            html_parts.append(f'<p>{_inline(stripped)}</p>')
 
         if in_list:
             html_parts.append('</ul>')

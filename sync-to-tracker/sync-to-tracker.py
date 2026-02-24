@@ -162,6 +162,10 @@ def extract_human_summary(raw_block: str) -> str:
         # Skip empty lines at the start
         if not stripped and not description_lines and section is None:
             continue
+
+        # Skip markdown headers (##, ###, etc.)
+        if stripped.startswith('#'):
+            continue
             
         # Skip metadata fields
         if any(stripped.startswith(prefix) for prefix in metadata_prefixes):
