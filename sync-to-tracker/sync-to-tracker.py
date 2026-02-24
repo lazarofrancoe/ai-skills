@@ -134,6 +134,68 @@ BOLD = '\033[1m'
 NC = '\033[0m'
 
 
+def extract_human_summary(raw_block: str) -> str:
+    """Extract a clean, human-readable summary from a raw issue block.
+    
+    Pulls out:
+    - The description paragraph (the prose explaining what to build)
+    - The acceptance criteria checklist
+    
+    Strips all metadata fields (Status, Dependencies, Complexity, etc.)
+    since those are for the tooling, not for humans reading Monday.
+    """
+    lines = raw_block.split('\n')
+    
+    description_lines = []
+    acceptance_lines = []
+    section = None
+    
+    # Fields to skip — these are metadata, not content
+    metadata_prefixes = (
+        '### ISSUE-', '**Status:**', '**Dependencies:**', '**Complexity:**',
+        '**Layers:**', '**Files likely touched:**', '**Dev notes:**',
+    )
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Skip empty lines at the start
+        if not stripped and not description_lines and section is None:
+            continue
+            
+        # Skip metadata fields
+        if any(stripped.startswith(prefix) for prefix in metadata_prefixes):
+            continue
+        
+        # Detect acceptance criteria section
+        if stripped.startswith('**Acceptance criteria:**'):
+            section = 'acceptance'
+            continue
+        
+        # Collect acceptance criteria checkboxes
+        if section == 'acceptance':
+            if stripped.startswith('- ['):
+                # Convert markdown checkbox to plain text
+                criterion = stripped.replace('- [x] ', '✅ ').replace('- [ ] ', '☐ ')
+                acceptance_lines.append(criterion)
+            elif stripped and not stripped.startswith('**'):
+                acceptance_lines.append(stripped)
+            elif stripped.startswith('**'):
+                section = None  # Hit next field, stop
+        
+        # Collect description (prose paragraphs between metadata and acceptance)
+        elif section is None and stripped and not stripped.startswith('**'):
+            description_lines.append(stripped)
+    
+    parts = []
+    if description_lines:
+        parts.append('\n'.join(description_lines))
+    if acceptance_lines:
+        parts.append('\nCriteria:\n' + '\n'.join(acceptance_lines))
+    
+    return '\n'.join(parts) if parts else ''
+
+
 def sync(issues_file: str, dry_run: bool = False):
     """Main sync logic."""
     config = load_config()
@@ -158,7 +220,7 @@ def sync(issues_file: str, dry_run: bool = False):
                 tracker_id = adapter.create_item(
                     title=f"{issue_id}: {issue['title']}",
                     status=normalized_status,
-                    description=issue.get("raw_block", ""),
+                    description=extract_human_summary(issue.get("raw_block", "")),
                     complexity=issue.get("complexity", "M"),
                     layers=issue.get("layers", ""),
                 )
