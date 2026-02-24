@@ -153,10 +153,10 @@ class Adapter(BaseAdapter):
         if not item_id:
             raise RuntimeError(f"Failed to create item: {result}")
 
-        # Add description as an update (Monday doesn't have a native description field)
+        # Add description as an update (Monday uses HTML in updates)
         if description:
-            # Truncate and clean for Monday updates
-            clean_desc = description[:5000].replace('"', '\\"').replace('\n', '\\n')
+            html_desc = self._to_html(description)
+            clean_desc = html_desc[:5000].replace('"', '\\"')
             update_query = f"""
                 mutation {{
                     create_update(
@@ -192,7 +192,8 @@ class Adapter(BaseAdapter):
     def update_description(self, tracker_id: str, description: str):
         if not description:
             return
-        clean_desc = description[:5000].replace('"', '\\"').replace('\n', '\\n')
+        html_desc = self._to_html(description)
+        clean_desc = html_desc[:5000].replace('"', '\\"')
         query = f"""
             mutation {{
                 create_update(
@@ -204,6 +205,46 @@ class Adapter(BaseAdapter):
             }}
         """
         self._graphql(query)
+
+    @staticmethod
+    def _to_html(text: str) -> str:
+        """Convert plain text summary to Monday-compatible HTML."""
+        lines = text.split('\n')
+        html_parts = []
+        in_list = False
+
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                if in_list:
+                    html_parts.append('</ul>')
+                    in_list = False
+                html_parts.append('<br/>')
+                continue
+
+            # Criteria header
+            if stripped == 'Criteria:':
+                html_parts.append('<br/><strong>Criteria:</strong>')
+                continue
+
+            # Checklist items
+            if stripped.startswith('✅ ') or stripped.startswith('☐ '):
+                if not in_list:
+                    html_parts.append('<ul>')
+                    in_list = True
+                html_parts.append(f'<li>{stripped}</li>')
+                continue
+
+            # Regular text
+            if in_list:
+                html_parts.append('</ul>')
+                in_list = False
+            html_parts.append(f'<p>{stripped}</p>')
+
+        if in_list:
+            html_parts.append('</ul>')
+
+        return ''.join(html_parts)
 
     @staticmethod
     def _escape(s: str) -> str:
