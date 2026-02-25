@@ -274,10 +274,14 @@ def sync(issues_file: str, dry_run: bool = False):
                         status=normalized_status,
                     )
                     state[issue_id]["last_status"] = normalized_status
+                    # Backfill hash if missing
+                    if "description_hash" not in state[issue_id]:
+                        state[issue_id]["description_hash"] = summary_hash
                     print(f"  {YELLOW}✓ Status{NC}  {issue_id}: → {normalized_status}")
                 updated += 1
 
-            elif desc_changed and summary:
+            elif desc_changed and summary and "description_hash" in tracker_item:
+                # Only push description if hash existed before (not first-time backfill)
                 if dry_run:
                     print(f"  {CYAN}[DESC]{NC}  {issue_id}: description changed")
                 else:
@@ -290,6 +294,9 @@ def sync(issues_file: str, dry_run: bool = False):
                 updated += 1
 
             else:
+                # Backfill hash silently if missing
+                if "description_hash" not in tracker_item:
+                    state[issue_id]["description_hash"] = summary_hash
                 unchanged += 1
 
     if not dry_run:
