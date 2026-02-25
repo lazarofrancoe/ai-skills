@@ -17,6 +17,7 @@ State:  .sync-state.json in project root (auto-generated, commit to repo)
 
 import sys
 import json
+import hashlib
 import argparse
 from pathlib import Path
 
@@ -200,6 +201,11 @@ def extract_human_summary(raw_block: str) -> str:
     return '\n'.join(parts) if parts else ''
 
 
+def _hash(text: str) -> str:
+    """Short hash of text content for change detection."""
+    return hashlib.md5(text.encode()).hexdigest()[:12] if text else ""
+
+
 def sync(issues_file: str, dry_run: bool = False):
     """Main sync logic."""
     config = load_config()
@@ -215,7 +221,7 @@ def sync(issues_file: str, dry_run: bool = False):
     issue_ids = {issue["id"] for issue in issues}
 
     # --- Archive orphaned issues (in state but not in .issues.md) -----------
-    orphaned = [iid for iid in state if iid not in issue_ids]
+    orphaned = [iid for iid in list(state.keys()) if iid not in issue_ids]
     for issue_id in orphaned:
         tracker_item = state[issue_id]
         if dry_run:
@@ -231,6 +237,8 @@ def sync(issues_file: str, dry_run: bool = False):
         issue_id = issue["id"]
         normalized_status = NORMALIZED_STATUSES.get(issue["status"], "backlog")
         tracker_item = state.get(issue_id)
+        summary = extract_human_summary(issue.get("raw_block", ""))
+        summary_hash = _hash(summary)
 
         if tracker_item is None:
             # --- New issue: create in tracker --------------------------------
@@ -240,32 +248,49 @@ def sync(issues_file: str, dry_run: bool = False):
                 tracker_id = adapter.create_item(
                     title=f"{issue_id}: {issue['title']}",
                     status=normalized_status,
-                    description=extract_human_summary(issue.get("raw_block", "")),
+                    description=summary,
                     complexity=issue.get("complexity", "M"),
                     layers=issue.get("layers", ""),
                 )
                 state[issue_id] = {
                     "tracker_id": tracker_id,
                     "last_status": normalized_status,
+                    "description_hash": summary_hash,
                 }
                 print(f"  {GREEN}✓ Created{NC}  {issue_id}: {issue['title']}  →  {tracker_id}")
             created += 1
 
-        elif tracker_item.get("last_status") != normalized_status:
-            # --- Status changed: update in tracker ---------------------------
-            if dry_run:
-                print(f"  {YELLOW}[UPDATE]{NC}  {issue_id}: {tracker_item['last_status']} → {normalized_status}")
-            else:
-                adapter.update_status(
-                    tracker_id=tracker_item["tracker_id"],
-                    status=normalized_status,
-                )
-                state[issue_id]["last_status"] = normalized_status
-                print(f"  {YELLOW}✓ Updated{NC}  {issue_id}: → {normalized_status}")
-            updated += 1
-
         else:
-            unchanged += 1
+            # --- Existing issue: check for changes ---------------------------
+            status_changed = tracker_item.get("last_status") != normalized_status
+            desc_changed = tracker_item.get("description_hash") != summary_hash
+
+            if status_changed:
+                if dry_run:
+                    print(f"  {YELLOW}[UPDATE]{NC}  {issue_id}: {tracker_item['last_status']} → {normalized_status}")
+                else:
+                    adapter.update_status(
+                        tracker_id=tracker_item["tracker_id"],
+                        status=normalized_status,
+                    )
+                    state[issue_id]["last_status"] = normalized_status
+                    print(f"  {YELLOW}✓ Status{NC}  {issue_id}: → {normalized_status}")
+                updated += 1
+
+            elif desc_changed and summary:
+                if dry_run:
+                    print(f"  {CYAN}[DESC]{NC}  {issue_id}: description changed")
+                else:
+                    adapter.update_description(
+                        tracker_id=tracker_item["tracker_id"],
+                        description=summary,
+                    )
+                    state[issue_id]["description_hash"] = summary_hash
+                    print(f"  {CYAN}✓ Desc{NC}  {issue_id}: description updated")
+                updated += 1
+
+            else:
+                unchanged += 1
 
     if not dry_run:
         save_sync_state(issues_file, state)
@@ -326,8 +351,12 @@ def resync_descriptions(issues_file: str, dry_run: bool = False):
             print(f"  {YELLOW}[RESYNC]{NC}  {issue_id}: {issue['title']}")
         else:
             adapter.update_description(tracker_item["tracker_id"], summary)
+            state[issue_id]["description_hash"] = _hash(summary)
             print(f"  {YELLOW}✓ Updated{NC}  {issue_id}: {issue['title']}")
         updated += 1
+
+    if not dry_run:
+        save_sync_state(issues_file, state)
 
     print()
     label = "[DRY RUN] " if dry_run else ""
