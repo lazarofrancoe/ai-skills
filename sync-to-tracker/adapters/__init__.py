@@ -72,3 +72,14 @@ class BaseAdapter(ABC):
             tracker_id: The tracker's item ID
         """
         ...
+
+    @abstractmethod
+    def update_title(self, tracker_id: str, title: str):
+        """
+        Update the title/name of an existing item.
+
+        Args:
+            tracker_id: The tracker's item ID
+            title: New item title
+        """
+        ...

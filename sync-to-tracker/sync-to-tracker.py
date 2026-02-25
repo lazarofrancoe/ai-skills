@@ -245,8 +245,9 @@ def sync(issues_file: str, dry_run: bool = False):
             if dry_run:
                 print(f"  {GREEN}[CREATE]{NC}  {issue_id}: {issue['title']}  →  {normalized_status}")
             else:
+                full_title = f"{issue_id}: {issue['title']}"
                 tracker_id = adapter.create_item(
-                    title=f"{issue_id}: {issue['title']}",
+                    title=full_title,
                     status=normalized_status,
                     description=summary,
                     complexity=issue.get("complexity", "M"),
@@ -255,6 +256,7 @@ def sync(issues_file: str, dry_run: bool = False):
                 state[issue_id] = {
                     "tracker_id": tracker_id,
                     "last_status": normalized_status,
+                    "last_title": full_title,
                     "description_hash": summary_hash,
                 }
                 print(f"  {GREEN}✓ Created{NC}  {issue_id}: {issue['title']}  →  {tracker_id}")
@@ -262,8 +264,25 @@ def sync(issues_file: str, dry_run: bool = False):
 
         else:
             # --- Existing issue: check for changes ---------------------------
+            full_title = f"{issue_id}: {issue['title']}"
             status_changed = tracker_item.get("last_status") != normalized_status
+            title_changed = tracker_item.get("last_title") != full_title
             desc_changed = tracker_item.get("description_hash") != summary_hash
+
+            if title_changed and "last_title" in tracker_item:
+                if dry_run:
+                    print(f"  {CYAN}[TITLE]{NC}  {issue_id}: → {issue['title']}")
+                else:
+                    adapter.update_title(
+                        tracker_id=tracker_item["tracker_id"],
+                        title=full_title,
+                    )
+                    state[issue_id]["last_title"] = full_title
+                    print(f"  {CYAN}✓ Title{NC}  {issue_id}: → {issue['title']}")
+                updated += 1
+            elif "last_title" not in tracker_item:
+                # Backfill title silently
+                state[issue_id]["last_title"] = full_title
 
             if status_changed:
                 if dry_run:
@@ -280,7 +299,7 @@ def sync(issues_file: str, dry_run: bool = False):
                     print(f"  {YELLOW}✓ Status{NC}  {issue_id}: → {normalized_status}")
                 updated += 1
 
-            elif desc_changed and summary and "description_hash" in tracker_item:
+            if desc_changed and summary and "description_hash" in tracker_item:
                 # Only push description if hash existed before (not first-time backfill)
                 if dry_run:
                     print(f"  {CYAN}[DESC]{NC}  {issue_id}: description changed")
@@ -292,11 +311,11 @@ def sync(issues_file: str, dry_run: bool = False):
                     state[issue_id]["description_hash"] = summary_hash
                     print(f"  {CYAN}✓ Desc{NC}  {issue_id}: description updated")
                 updated += 1
+            elif "description_hash" not in tracker_item:
+                # Backfill hash silently
+                state[issue_id]["description_hash"] = summary_hash
 
-            else:
-                # Backfill hash silently if missing
-                if "description_hash" not in tracker_item:
-                    state[issue_id]["description_hash"] = summary_hash
+            if not status_changed and not title_changed and not (desc_changed and "description_hash" in tracker_item):
                 unchanged += 1
 
     if not dry_run:

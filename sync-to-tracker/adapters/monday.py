@@ -263,6 +263,21 @@ class Adapter(BaseAdapter):
         """
         self._graphql(query)
 
+    def update_title(self, tracker_id: str, title: str):
+        query = f"""
+            mutation {{
+                change_simple_column_value(
+                    board_id: {self.board_id},
+                    item_id: {tracker_id},
+                    column_id: "name",
+                    value: "{self._escape(title)}"
+                ) {{
+                    id
+                }}
+            }}
+        """
+        self._graphql(query)
+
     @staticmethod
     def _escape(s: str) -> str:
         """Escape a string for use in GraphQL."""

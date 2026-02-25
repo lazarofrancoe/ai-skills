@@ -45,3 +45,6 @@ class Adapter(BaseAdapter):
 
     def archive_item(self, tracker_id: str):
         ...
+
+    def update_title(self, tracker_id: str, title: str):
+        ...
