@@ -210,7 +210,23 @@ def sync(issues_file: str, dry_run: bool = False):
     created = 0
     updated = 0
     unchanged = 0
+    archived = 0
 
+    issue_ids = {issue["id"] for issue in issues}
+
+    # --- Archive orphaned issues (in state but not in .issues.md) -----------
+    orphaned = [iid for iid in state if iid not in issue_ids]
+    for issue_id in orphaned:
+        tracker_item = state[issue_id]
+        if dry_run:
+            print(f"  {RED}[ARCHIVE]{NC}  {issue_id}  (removed from .issues.md)")
+        else:
+            adapter.archive_item(tracker_item["tracker_id"])
+            del state[issue_id]
+            print(f"  {RED}✓ Archived{NC}  {issue_id}")
+        archived += 1
+
+    # --- Create / update issues ---------------------------------------------
     for issue in issues:
         issue_id = issue["id"]
         normalized_status = NORMALIZED_STATUSES.get(issue["status"], "backlog")
@@ -257,7 +273,7 @@ def sync(issues_file: str, dry_run: bool = False):
     # --- Summary
     print()
     label = "[DRY RUN] " if dry_run else ""
-    print(f"  {label}{GREEN}{created} created{NC}  {YELLOW}{updated} updated{NC}  {unchanged} unchanged")
+    print(f"  {label}{GREEN}{created} created{NC}  {YELLOW}{updated} updated{NC}  {RED}{archived} archived{NC}  {unchanged} unchanged")
 
 
 def show_status(issues_file: str):

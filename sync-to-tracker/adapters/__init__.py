@@ -62,3 +62,13 @@ class BaseAdapter(ABC):
             description: Human-readable description text
         """
         ...
+
+    @abstractmethod
+    def archive_item(self, tracker_id: str):
+        """
+        Archive an item in the tracker (soft delete).
+
+        Args:
+            tracker_id: The tracker's item ID
+        """
+        ...

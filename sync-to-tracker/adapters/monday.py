@@ -253,6 +253,16 @@ class Adapter(BaseAdapter):
 
         return ''.join(html_parts)
 
+    def archive_item(self, tracker_id: str):
+        query = f"""
+            mutation {{
+                archive_item(item_id: {tracker_id}) {{
+                    id
+                }}
+            }}
+        """
+        self._graphql(query)
+
     @staticmethod
     def _escape(s: str) -> str:
         """Escape a string for use in GraphQL."""
